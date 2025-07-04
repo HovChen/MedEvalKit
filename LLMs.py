@@ -94,7 +94,7 @@ class Janus:
 @LLMRegistry.register("HealthGPT")
 class HealthGPT:
     def __new__(cls, model_path: str, args: Any) -> Any:
-        if "phi-3" in model_path:
+        if "Phi-3" in model_path:
             from models.HealthGPT.HealthGPT_phi3 import HealthGPT
         elif "phi-4" in model_path:
             from models.HealthGPT.HealthGPT_phi import HealthGPT

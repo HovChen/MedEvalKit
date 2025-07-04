@@ -57,6 +57,15 @@ def add_special_tokens_and_resize_model(tokenizer, model, vq_idx_nums=8192):
     
     return num_new_tokens
 
+def add_reasoning_tokens_and_resize_model(tokenizer, model):
+    special_tokens = {
+        'additional_special_tokens': (['<think>', '</think>', '<answer>', '</answer>'])
+    }
+    num_new = tokenizer.add_special_tokens(special_tokens)
+    model.resize_token_embeddings(len(tokenizer))
+
+    return num_new
+
 com_vision_args = argparse.Namespace(
     freeze_backbone=False,
     mm_patch_merge_type='flat',

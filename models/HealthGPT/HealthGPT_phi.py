@@ -119,9 +119,10 @@ class HealthGPT:
             input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze_(0).cuda()
             imgs = None
 
+        attention_mask = torch.ones_like(input_ids)
         with torch.inference_mode():
             do_sample = False if self.temperature == 0 else True
-            output_ids = self.llm.base_model.model.generate(input_ids,images=imgs,do_sample=do_sample,num_beams=5,max_new_tokens=self.max_tokens,temperature = self.temperature,top_p = self.top_p,repetition_penalty = self.repetition_penalty,use_cache=True)
+            output_ids = self.llm.base_model.model.generate(input_ids,images=imgs,attention_mask=attention_mask,do_sample=do_sample,num_beams=5,max_new_tokens=self.max_tokens,temperature = self.temperature,top_p = self.top_p,repetition_penalty = self.repetition_penalty,use_cache=True)
 
         outputs = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
         return outputs

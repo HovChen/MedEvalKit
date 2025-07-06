@@ -102,8 +102,8 @@ class HealthGPT:
             from models.HealthGPT.HealthGPT import HealthGPT
         return HealthGPT(model_path, args)
     
-@LLMRegistry.register("Medical-R1")
-class MedicalR1:
+@LLMRegistry.register("Path-R1")
+class PathR1:
     def __new__(cls, model_path: str, args: Any) -> Any:
         if "Phi-3" in model_path:
             from models.HealthGPT.HealthGPT_phi3_ft import HealthGPT

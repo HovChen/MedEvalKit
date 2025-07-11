@@ -100,3 +100,4 @@ def load_weights(model, hlora_path, fusion_layer_path=None):
             print(f"Warning: Unexpected keys in fusion_layer checkpoint: {fusion_layer_unexpected_keys}")
 
     return model
+

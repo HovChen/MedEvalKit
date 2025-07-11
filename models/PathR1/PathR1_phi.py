@@ -16,22 +16,22 @@ from .llava import conversation as conversation_lib
 from .llava.model import *
 from .llava.mm_utils import tokenizer_image_token,process_images
 from .llava.model.language_model.llava_phi3 import LlavaPhiForCausalLM
-from .utils import find_all_linear_names, add_special_tokens_and_resize_model, load_weights, expand2square, com_vision_args
+from .utils import find_all_linear_names, load_weights, expand2square,com_vision_args
 
 
-class HealthGPT:
+class PathR1:
     def __init__(self,model_path,args):
         super().__init__()
         self.llm = LlavaPhiForCausalLM.from_pretrained(
         pretrained_model_name_or_path = model_path,
         attn_implementation="flash_attention_2",
         torch_dtype= torch.float16,
-        device_map="cuda"
+        device_map="cuda",
     )
         print("load model done")
         lora_config = LoraConfig(
-            r= 32,
-            lora_alpha=64,
+            r= 64,
+            lora_alpha=128,
             target_modules=find_all_linear_names(self.llm),
             lora_dropout=0.0,
             bias='none',
@@ -44,23 +44,20 @@ class HealthGPT:
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             model_path,
             padding_side="right",
-            use_fast=False,
+            use_fast=True,
         )
         print("load tokenizer done")
 
-        num_new_tokens = add_special_tokens_and_resize_model(self.tokenizer, self.llm, 8192)
-        print(f"Number of new tokens added for unified task: {num_new_tokens}")
-
         com_vision_args.model_name_or_path = model_path
-        com_vision_args.vision_tower = '/mnt/workspace/workgroup_dev/longli/models/hub/clip-vit-large-patch14-336'
-        com_vision_args.version = "phi4_instruct"
+        com_vision_args.vision_tower = '/root/autodl-tmp/Path-R1/checkpoints/openai/clip-vit-large-patch14-336'
+        com_vision_args.version = "phi3_instruct"
 
         self.llm.get_model().initialize_vision_modules(model_args=com_vision_args)
         self.llm.get_vision_tower().to(dtype=torch.float16)
         self.llm.get_model().mm_projector.to(dtype=torch.float16)
         print("load vision tower done")
 
-        self.llm = load_weights(self.llm, "/mnt/workspace/workgroup_dev/longli/models/hub/HealthGPT-L14/com_hlora_weights_phi4.bin")
+        self.llm = load_weights(self.llm, hlora_path="/root/autodl-tmp/Path-R1/checkpoints/hlora_sft_pathvqa3000/com_hlora_weights.bin")
         print("load weights done")
         self.llm.eval()
         self.llm.to(dtype=torch.float16).cuda()
@@ -72,7 +69,7 @@ class HealthGPT:
 
 
     def process_messages(self,messages):
-        conv = conversation_lib.conv_templates["phi4_instruct"].copy()
+        conv = conversation_lib.conv_templates["phi3_instruct"].copy()
         conv.messages = []
         if  "system" in messages:
             conv.system = messages["system"]

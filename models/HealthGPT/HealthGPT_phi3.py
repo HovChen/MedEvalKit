@@ -44,7 +44,7 @@ class HealthGPT:
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             model_path,
             padding_side="right",
-            use_fast=False,
+            use_fast=True,
         )
         print("load tokenizer done")
 
@@ -52,7 +52,7 @@ class HealthGPT:
         print(f"Number of new tokens added for unified task: {num_new_tokens}")
 
         com_vision_args.model_name_or_path = model_path
-        com_vision_args.vision_tower = '/root/autodl-tmp/HealthGPT/checkpoints/openai/clip-vit-large-patch14-336'
+        com_vision_args.vision_tower = '/root/autodl-tmp/Path-R1/checkpoints/openai/clip-vit-large-patch14-336'
         com_vision_args.version = "phi3_instruct"
 
         self.llm.get_model().initialize_vision_modules(model_args=com_vision_args)
@@ -60,7 +60,7 @@ class HealthGPT:
         self.llm.get_model().mm_projector.to(dtype=torch.float16)
         print("load vision tower done")
 
-        self.llm = load_weights(self.llm, "/root/autodl-tmp/HealthGPT/checkpoints/lintw/HealthGPT-M3/com_hlora_weights.bin")
+        self.llm = load_weights(self.llm, "/root/autodl-tmp/Path-R1/checkpoints/lintw/HealthGPT-M3/com_hlora_weights.bin")
         print("load weights done")
         self.llm.eval()
         self.llm.to(dtype=torch.float16).cuda()

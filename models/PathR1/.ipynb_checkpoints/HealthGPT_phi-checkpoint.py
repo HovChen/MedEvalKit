@@ -16,7 +16,7 @@ from .llava import conversation as conversation_lib
 from .llava.model import *
 from .llava.mm_utils import tokenizer_image_token,process_images
 from .llava.model.language_model.llava_phi3 import LlavaPhiForCausalLM
-from .utils import find_all_linear_names, add_reasoning_tokens_and_resize_model, load_weights, expand2square,com_vision_args
+from .utils import find_all_linear_names, add_special_tokens_and_resize_model, load_weights, expand2square,com_vision_args
 
 
 class HealthGPT:
@@ -30,8 +30,8 @@ class HealthGPT:
     )
         print("load model done")
         lora_config = LoraConfig(
-            r= 64,
-            lora_alpha=128,
+            r= 32,
+            lora_alpha=64,
             target_modules=find_all_linear_names(self.llm),
             lora_dropout=0.0,
             bias='none',
@@ -48,21 +48,19 @@ class HealthGPT:
         )
         print("load tokenizer done")
 
-        num_new_tokens = add_reasoning_tokens_and_resize_model(self.tokenizer, self.llm)
-        print(f"Number of reasoning tokens added for unified task: {num_new_tokens}")
+        num_new_tokens = add_special_tokens_and_resize_model(self.tokenizer, self.llm, 8192)
+        print(f"Number of new tokens added for unified task: {num_new_tokens}")
 
         com_vision_args.model_name_or_path = model_path
-        com_vision_args.vision_tower = '/root/autodl-tmp/HealthGPT/checkpoints/openai/clip-vit-large-patch14-336'
-        com_vision_args.version = "phi3_instruct"
+        com_vision_args.vision_tower = '/mnt/workspace/workgroup_dev/longli/models/hub/clip-vit-large-patch14-336'
+        com_vision_args.version = "phi4_instruct"
 
         self.llm.get_model().initialize_vision_modules(model_args=com_vision_args)
         self.llm.get_vision_tower().to(dtype=torch.float16)
         self.llm.get_model().mm_projector.to(dtype=torch.float16)
         print("load vision tower done")
 
-        self.llm = load_weights(self.llm, 
-                                hlora_path="/root/autodl-tmp/HealthGPT/checkpoints/hlora_sft_pathvqa3000/com_hlora_finetuned_weights.bin",
-                                fusion_layer_path="/root/autodl-tmp/HealthGPT/checkpoints/hlora_sft_pathvqa3000/fusion_layer_finetuned_weights.bin")
+        self.llm = load_weights(self.llm, "/mnt/workspace/workgroup_dev/longli/models/hub/HealthGPT-L14/com_hlora_weights_phi4.bin")
         print("load weights done")
         self.llm.eval()
         self.llm.to(dtype=torch.float16).cuda()
@@ -74,7 +72,7 @@ class HealthGPT:
 
 
     def process_messages(self,messages):
-        conv = conversation_lib.conv_templates["phi3_instruct"].copy()
+        conv = conversation_lib.conv_templates["phi4_instruct"].copy()
         conv.messages = []
         if  "system" in messages:
             conv.system = messages["system"]
@@ -121,10 +119,9 @@ class HealthGPT:
             input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze_(0).cuda()
             imgs = None
 
-        attention_mask = torch.ones_like(input_ids)
         with torch.inference_mode():
             do_sample = False if self.temperature == 0 else True
-            output_ids = self.llm.base_model.model.generate(input_ids,images=imgs,attention_mask=attention_mask,do_sample=do_sample,num_beams=5,max_new_tokens=self.max_tokens,temperature = self.temperature,top_p = self.top_p,repetition_penalty = self.repetition_penalty,use_cache=True)
+            output_ids = self.llm.base_model.model.generate(input_ids,images=imgs,do_sample=do_sample,num_beams=5,max_new_tokens=self.max_tokens,temperature = self.temperature,top_p = self.top_p,repetition_penalty = self.repetition_penalty,use_cache=True)
 
         outputs = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
         return outputs
@@ -135,3 +132,38 @@ class HealthGPT:
             output = self.generate_output(messages)
             outputs.append(output)
         return outputs
+
+if __name__ == '__main__':
+    # def construct_messages(sample):
+    #     question = sample["question"]
+    #     image = sample["image"]
+    #     answer = sample["answer"]
+    #     if answer in ["yes","no"]:
+    #         question += "Please output 'yes' or 'no'(no extra output)"
+    #         if os.environ.get("STRICT_PROMPT","False") == "True":
+    #             question += "Wrap your final answer between <answer> and </answer>, for example: <answer>yes</answer>"
+    #     else:
+    #         question += 'Answer the question concisely(Keep it short and concise).'
+    #         if os.environ.get("STRICT_PROMPT","False") == "True":
+    #             question += "Wrap your final answer between <answer> and </answer>, for example: <answer>positive influence</answer>"
+    #     messages = {"prompt":question,"image":image}
+    #     sample["messages"] = messages
+    #     return sample
+    
+    # from datasets import load_dataset
+    # from tqdm import tqdm
+    # dataset = load_dataset("/mnt/workspace/workgroup_dev/longli/MedLLMBenchmarks/benchmarks/VQA_RAD",split="test")
+
+    # llm = HealthGPT()
+    # for data in tqdm(dataset):
+    #     data = construct_messages(data)
+    #     image = data["image"]
+    #     messages = {"prompt":data["question"],"image":image}
+    #     result = llm.generate_output(messages)
+
+    llm = HealthGPT()
+    image = "/mnt/workspace/workgroup_dev/longli/MedLLMBenchmarks/benchmarks/OmniMedVQA/Images/ACRIMA/Im553_g_ACRIMA.png"
+    image2 = "/mnt/workspace/workgroup_dev/longli/MedLLMBenchmarks/benchmarks/OmniMedVQA/Images/BreakHis/benign/SOB_B_A-14-22549AB-40-005.png"
+    messages = [{ 'images': [image,image2],"prompt":"\nQuestion:  你是一个医疗助手，我的问题是这两张图片里的内容是什么？"}]
+    result = llm.generate_outputs(messages)
+    print("result:",result)

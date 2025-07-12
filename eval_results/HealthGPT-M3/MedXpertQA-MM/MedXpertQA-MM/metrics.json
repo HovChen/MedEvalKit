@@ -1,0 +1,36 @@
+{
+    "total metrics": {
+        "total": 2000,
+        "right": 420,
+        "acc": 0.21
+    },
+    "question type metrics": {
+        "Reasoning": {
+            "total": 1446,
+            "right": 293,
+            "acc": 0.20262793914246197
+        },
+        "Understanding": {
+            "total": 554,
+            "right": 127,
+            "acc": 0.2292418772563177
+        }
+    },
+    "task type metrics": {
+        "Treatment": {
+            "total": 448,
+            "right": 97,
+            "acc": 0.21651785714285715
+        },
+        "Basic Science": {
+            "total": 353,
+            "right": 62,
+            "acc": 0.17563739376770537
+        },
+        "Diagnosis": {
+            "total": 1199,
+            "right": 261,
+            "acc": 0.2176814011676397
+        }
+    }
+}

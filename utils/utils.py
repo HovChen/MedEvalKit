@@ -173,7 +173,7 @@ def judge_judgement(answer,response):
             return True
     return False
 
-
+"""
 def judge_open_end_vqa(answer,response):
     answer = answer.lower()
     response = parse_response(response)
@@ -203,7 +203,14 @@ def judge_open_end_vqa(answer,response):
         "precision": precision,
         "recall": recall,
         "f1" :f1         
-    }
+    }"""
+def judge_open_end_vqa(answer, response):
+    answer = answer.lower()
+    response = parse_response(response)
+
+    em = response == answer
+    return {"em": em}
+
 
 
 def calculate_f1(prediction, ground_truth):

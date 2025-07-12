@@ -148,6 +148,12 @@ class MedDr:
         from models.MedDr.MedDr import MedDr
         return MedDr(model_path, args)
 
+@LLMRegistry.register("Patho_R1_3B")
+class PathoR1:
+    def __new__(cls, model_path: str, args: Any) -> Any:
+        from models.PathoR1 import PathoR1
+        return PathoR1(model_path, args)
+
 def init_llm(args):
     try:
         model_class = LLMRegistry.get_model(args.model_name)

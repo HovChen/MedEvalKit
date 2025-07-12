@@ -1,0 +1,28 @@
+{
+    "total metrics": {
+        "total": 6719,
+        "right": 2692,
+        "acc": 0.4006548593540705
+    },
+    "open": {
+        "total": 3357,
+        "right": 0,
+        "bleu1": 0.0,
+        "bleu2": 0.0,
+        "bleu3": 0.0,
+        "bleu4": 0.0,
+        "rouge1": 0.0,
+        "rouge2": 0.0,
+        "rougel": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "em": 0.0,
+        "acc": 0.0
+    },
+    "close": {
+        "total": 3362,
+        "right": 2692,
+        "acc": 0.8007138607971446
+    }
+}
